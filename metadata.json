@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Fix My Ward: Community Problem Tracker",
+  "description": "A platform for Bengaluru citizens to report civic issues directly to their ward councillors with AI-powered validation to prevent misuse.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
