@@ -1,35 +1,13 @@
 
 import mongoose, { Schema, Document } from 'mongoose';
 
-/**
- * WARD SCHEMA
- * Stores master data for Bengaluru Wards.
- */
-export interface IWard extends Document {
-  wardNumber: string;
-  name: string;
-  councillorName: string;
-  party: string;
-}
-
-const WardSchema: Schema = new Schema({
-  wardNumber: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
-  councillorName: { type: String, required: true },
-  party: { type: String, required: true, enum: ['BJP', 'INC', 'JDS', 'Independent'] },
-});
-
-/**
- * USER SCHEMA
- * Unified schema for both Citizens and Councillors.
- * Role-based access control is handled by the 'role' field.
- */
+// User Schema (Citizen or Councillor)
 export interface IUser extends Document {
   name: string;
   phone: string;
   passwordHash: string;
   role: 'citizen' | 'councillor';
-  wardId: string; // References Ward.wardNumber
+  wardId: string;
   createdAt: Date;
 }
 
@@ -38,51 +16,52 @@ const UserSchema: Schema = new Schema({
   phone: { type: String, required: true, unique: true },
   passwordHash: { type: String, required: true },
   role: { type: String, required: true, enum: ['citizen', 'councillor'] },
-  wardId: { type: String, required: true },
+  wardId: { type: String, required: true }, // References Ward.id
   createdAt: { type: Date, default: Date.now },
 });
 
-/**
- * COMPLAINT SCHEMA
- * Stores information about civic issues reported by citizens.
- * Includes AI validation metadata and councillor verification status.
- */
-export interface IComplaint extends Document {
-  citizenId: mongoose.Types.ObjectId;
+// Ward Schema
+export interface IWard extends Document {
+  id: string; // Ward Number
+  name: string;
+  councillorName: string;
+  party: string;
+}
+
+const WardSchema: Schema = new Schema({
+  id: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
+  councillorName: { type: String, required: true },
+  party: { type: String, required: true },
+});
+
+// Problem Report Schema
+export interface IReport extends Document {
+  reportId: string;
+  userId: mongoose.Types.ObjectId;
+  userName: string;
+  userPhone: string;
   wardId: string;
   description: string;
-  imageUrl: string; // URL to storage (e.g., S3 or MongoDB GridFS)
+  image: string; // Base64 or URL
   status: 'PENDING' | 'VERIFIED' | 'REJECTED';
-  aiVerification: {
-    isValid: boolean;
-    reason: string;
-    category: string;
-  };
-  councillorFeedback?: string;
+  aiVerificationReason?: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const ComplaintSchema: Schema = new Schema({
-  citizenId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+const ReportSchema: Schema = new Schema({
+  reportId: { type: String, required: true, unique: true },
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  userName: { type: String, required: true },
+  userPhone: { type: String, required: true },
   wardId: { type: String, required: true },
   description: { type: String, required: true },
-  imageUrl: { type: String, required: true },
-  status: { 
-    type: String, 
-    required: true, 
-    enum: ['PENDING', 'VERIFIED', 'REJECTED'],
-    default: 'PENDING' 
-  },
-  aiVerification: {
-    isValid: { type: Boolean, default: false },
-    reason: { type: String },
-    category: { type: String }
-  },
-  councillorFeedback: { type: String },
+  image: { type: String, required: true },
+  status: { type: String, enum: ['PENDING', 'VERIFIED', 'REJECTED'], default: 'PENDING' },
+  aiVerificationReason: { type: String },
 }, { timestamps: true });
 
-// Models
-export const Ward = mongoose.model<IWard>('Ward', WardSchema);
 export const User = mongoose.model<IUser>('User', UserSchema);
-export const Complaint = mongoose.model<IComplaint>('Complaint', ComplaintSchema);
+export const Ward = mongoose.model<IWard>('Ward', WardSchema);
+export const Report = mongoose.model<IReport>('Report', ReportSchema);
